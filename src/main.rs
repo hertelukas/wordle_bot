@@ -62,13 +62,53 @@ impl Guess {
         Guess { guess }
     }
 
-    /// Wether the word is still possible with this guess
+    /// Wether `candidate` is possible with this guess
     fn allows(&self, candidate: &str) -> bool {
         self.guess.iter().enumerate().all(|(i, ch)| match ch {
+            // Would this character be grey for `candidate`?
             GuessedCharacter::Not(ch) => candidate.chars().all(|c| &c != ch),
+            // Would this character be orange for `candidate`?
             GuessedCharacter::Elsewhere(ch) => {
-                candidate.chars().any(|c| &c == ch) && candidate.chars().nth(i) != Some(*ch)
+                // Is not the current character
+                let is_not_current = candidate.chars().nth(i) != Some(*ch);
+
+                // Number of times this character is in the candidate
+                let i = candidate.chars().filter(|c| c == ch).count();
+
+                // Number of times this character is green in the candidate
+                let j = self
+                    .guess
+                    .iter()
+                    .enumerate()
+                    .filter(|(k, ch_check)| {
+                        if let GuessedCharacter::Correct(ch_check) = ch_check {
+                            ch_check == ch && candidate.chars().nth(*k) == Some(*ch)
+                        } else {
+                            false
+                        }
+                    })
+                    .count();
+
+                // Number of times this char should be orange, from the start
+                let orange = i - j;
+
+                // Number of times the character appears before in our guess
+                let already_guessed = self
+                    .guess
+                    .iter()
+                    .enumerate()
+                    .filter(|(l, ch_check)| {
+                        if let GuessedCharacter::Elsewhere(ch_check) = ch_check {
+                            *l < i && ch_check == ch
+                        } else {
+                            false
+                        }
+                    })
+                    .count();
+
+                is_not_current && already_guessed <= orange
             }
+            // Would this character be green for `candidate`?
             GuessedCharacter::Correct(ch) => candidate.chars().nth(i) == Some(*ch),
         })
     }
