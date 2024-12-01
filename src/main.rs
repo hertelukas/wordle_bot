@@ -73,10 +73,10 @@ impl Guess {
                 let is_not_current = candidate.chars().nth(i) != Some(*ch);
 
                 // Number of times this character is in the candidate
-                let i = candidate.chars().filter(|c| c == ch).count();
+                let in_candidate = candidate.chars().filter(|c| c == ch).count();
 
                 // Number of times this character is green in the candidate
-                let j = self
+                let green_in_candidate = self
                     .guess
                     .iter()
                     .enumerate()
@@ -90,7 +90,7 @@ impl Guess {
                     .count();
 
                 // Number of times this char should be orange, from the start
-                let orange = i - j;
+                let orange = in_candidate - green_in_candidate;
 
                 // Number of times the character appears before in our guess
                 let already_guessed = self
@@ -106,7 +106,8 @@ impl Guess {
                     })
                     .count();
 
-                is_not_current && already_guessed <= orange
+                // println!("({i}, {ch}): {is_not_current} && {already_guessed} < {orange}");
+                is_not_current && already_guessed < orange
             }
             // Would this character be green for `candidate`?
             GuessedCharacter::Correct(ch) => candidate.chars().nth(i) == Some(*ch),
@@ -129,7 +130,13 @@ fn main() {
     let mut game = Game::new(words);
 
     game.guess(Guess {
-        guess: [Not('r'), Not('a'), Not('s'), Not('e'), Correct('n')],
+        guess: [
+            Elsewhere('s'),
+            Correct('r'),
+            Elsewhere('s'),
+            Elsewhere('o'),
+            Not('x'),
+        ],
     });
 
     println!("{:?}", game.possible())
