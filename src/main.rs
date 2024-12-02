@@ -15,6 +15,10 @@ struct Args {
     /// Path of input file with words
     #[arg(short, long)]
     words: String,
+
+    /// Number of threads to calculate next best move
+    #[arg(short, long)]
+    threads: Option<usize>,
 }
 
 fn main() {
@@ -23,7 +27,11 @@ fn main() {
     let words = load_words(args.words).expect("Failed to load words");
     let game = Wordle::new(words);
 
-    println!("{:?}", game.next());
+    if args.threads.unwrap_or(8) == 1 {
+        println!("{:?}", game.next());
+    } else {
+        println!("{:?}", game.next_parallel(args.threads.unwrap_or(8)));
+    }
 }
 
 fn load_words<P: AsRef<Path>>(path: P) -> Result<Vec<String>, std::io::Error> {

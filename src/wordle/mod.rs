@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, thread};
 
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -43,16 +43,59 @@ impl Wordle {
             bar.inc(1);
             bar.set_message((*possible_target).clone());
             for possible_guess in self.words.iter() {
-                let guess = Guess::guess(&possible_guess, &possible_target);
+                let guess = Guess::guess(possible_guess, possible_target);
 
                 fake_game.guess(guess);
                 // How many words are now possible, if we assume the `possible_target`
                 // is the actual target
-                *hashmap.entry(&possible_guess).or_insert(0) += fake_game.possible().len();
+                *hashmap.entry(possible_guess).or_insert(0) += fake_game.possible().len();
                 fake_game.guesses.pop();
             }
         }
         bar.finish();
+
+        let mut vec: Vec<(&String, usize)> = hashmap.into_iter().collect();
+
+        vec.sort_by(|(_, a), (_, b)| a.cmp(b));
+        vec
+    }
+
+    /// Returns a list, sorted by the best next guesses
+    pub fn next_parallel(&self, n: usize) -> Vec<(&String, usize)> {
+        let mut hashmap: HashMap<&String, usize> = HashMap::new();
+
+        // For each possible word, we want to check for every guess (all words),
+        // which possible words remain
+        let possible = self.possible();
+        thread::scope(|s| {
+            let (tx, rx) = std::sync::mpsc::channel();
+            for chunk in possible.chunks(possible.len() / n) {
+                let mut game = self.clone();
+                let tx = tx.clone();
+                s.spawn(move || {
+                    let mut hm: HashMap<&String, usize> = HashMap::new();
+                    for possible_target in chunk {
+                        for possible_guess in self.words.iter() {
+                            let guess = Guess::guess(possible_guess, possible_target);
+
+                            game.guess(guess);
+                            // How many words are now possible, if we assume the `possible_target`
+                            // is the actual target
+                            let possible_for_guess = game.possible().len();
+                            *hm.entry(possible_guess).or_insert(0) += possible_for_guess;
+                            game.guesses.pop();
+                        }
+                    }
+                    tx.send(hm).unwrap();
+                });
+            }
+            drop(tx);
+            while let Ok(hm) = rx.recv() {
+                for (k, v) in hm.into_iter() {
+                    *hashmap.entry(k).or_insert(0) += v;
+                }
+            }
+        });
 
         let mut vec: Vec<(&String, usize)> = hashmap.into_iter().collect();
 
