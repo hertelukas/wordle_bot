@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 
-use wordle_bot::{Guess, GuessedCharacter, Wordle};
+use wordle_bot::Wordle;
 
 /// Program showing best moves in Wördle
 #[derive(Parser, Debug)]
@@ -21,17 +21,9 @@ fn main() {
     let args = Args::parse();
 
     let words = load_words(args.words).expect("Failed to load words");
-    let mut game = Wordle::new(words);
+    let game = Wordle::new(words);
 
-    game.guess(Guess::new([
-        GuessedCharacter::Not('p'),
-        GuessedCharacter::Correct('l'),
-        GuessedCharacter::Correct('a'),
-        GuessedCharacter::Correct('t'),
-        GuessedCharacter::Not('z'),
-    ]));
-
-    println!("{:?}", game.possible())
+    println!("{:?}", game.next());
 }
 
 fn load_words<P: AsRef<Path>>(path: P) -> Result<Vec<String>, std::io::Error> {

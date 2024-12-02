@@ -88,5 +88,4 @@ fn test_create_some_guess() {
     assert_eq!(guess.guess[2], GuessedCharacter::Not('b'));
     assert_eq!(guess.guess[3], GuessedCharacter::Not('b'));
     assert_eq!(guess.guess[4], GuessedCharacter::Not('b'));
-
 }

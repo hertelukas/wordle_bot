@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
+use indicatif::{ProgressBar, ProgressStyle};
+
 #[cfg(test)]
 mod tests;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Wordle {
     words: Vec<String>,
     guesses: Vec<Guess>,
-    target: Option<String>,
 }
 
 impl Wordle {
@@ -15,7 +16,6 @@ impl Wordle {
         Wordle {
             words,
             guesses: vec![],
-            target: None,
         }
     }
 
@@ -25,13 +25,39 @@ impl Wordle {
     }
 
     /// Returns a list, sorted by the best next guesses
-    pub fn next(&self) -> Vec<String> {
-        let res = vec![];
+    pub fn next(&self) -> Vec<(&String, usize)> {
+        let mut hashmap: HashMap<&String, usize> = HashMap::new();
+
+        let mut fake_game = self.clone();
 
         // For each possible word, we want to check for every guess (all words),
         // which possible words remain
-        for possible_target in self.possible() {}
-        res
+        let bar = ProgressBar::new(self.possible().len().try_into().unwrap());
+        bar.set_style(
+            ProgressStyle::with_template(
+                "{msg} {wide_bar} [{elapsed_precise}/{duration_precise}] {pos:>7}/{len:7}",
+            )
+            .unwrap(),
+        );
+        for possible_target in self.possible().iter() {
+            bar.inc(1);
+            bar.set_message((*possible_target).clone());
+            for possible_guess in self.words.iter() {
+                let guess = Guess::guess(&possible_guess, &possible_target);
+
+                fake_game.guess(guess);
+                // How many words are now possible, if we assume the `possible_target`
+                // is the actual target
+                *hashmap.entry(&possible_guess).or_insert(0) += fake_game.possible().len();
+                fake_game.guesses.pop();
+            }
+        }
+        bar.finish();
+
+        let mut vec: Vec<(&String, usize)> = hashmap.into_iter().collect();
+
+        vec.sort_by(|(_, a), (_, b)| a.cmp(b));
+        vec
     }
 
     /// Returns a list of all possible words
@@ -43,7 +69,7 @@ impl Wordle {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Guess {
     guess: [GuessedCharacter; 5],
 }
@@ -157,7 +183,7 @@ impl Guess {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum GuessedCharacter {
     Not(char),
     Elsewhere(char),
