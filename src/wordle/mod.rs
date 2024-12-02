@@ -72,6 +72,7 @@ impl Wordle {
         let possible = self.possible();
         thread::scope(|s| {
             let (tx, rx) = std::sync::mpsc::channel();
+            let n = std::cmp::max(n, possible.len());
             for chunk in possible.chunks(possible.len() / n) {
                 let mut game = self.clone();
                 let tx = tx.clone();
