@@ -54,7 +54,10 @@ impl Wordle {
         }
         bar.finish();
 
-        let mut vec: Vec<(&String, usize)> = hashmap.into_iter().collect();
+        let mut vec: Vec<(&String, usize)> = hashmap
+            .into_iter()
+            .map(|(s, i)| (s, i / self.possible().len()))
+            .collect();
 
         vec.sort_by(|(_, a), (_, b)| a.cmp(b));
         vec
@@ -97,7 +100,10 @@ impl Wordle {
             }
         });
 
-        let mut vec: Vec<(&String, usize)> = hashmap.into_iter().collect();
+        let mut vec: Vec<(&String, usize)> = hashmap
+            .into_iter()
+            .map(|(s, i)| (s, i / possible.len()))
+            .collect();
 
         vec.sort_by(|(_, a), (_, b)| a.cmp(b));
         vec
