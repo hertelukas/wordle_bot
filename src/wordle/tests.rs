@@ -60,3 +60,33 @@ fn test_one_orange_one_green() {
     assert!(!guess.allows("daddd")); // First 'a' would be grey
     assert!(!guess.allows("aaddd")); // First 'a' would be green
 }
+
+#[test]
+fn test_create_correct_guess() {
+    let guess = Guess::guess("hello", "hello");
+
+    for ch in &guess.guess {
+        assert!(matches!(ch, GuessedCharacter::Correct(_)));
+    }
+
+    assert!(guess
+        .guess
+        .into_iter()
+        .zip("hello".chars().into_iter())
+        .all(|(guess, input)| match guess {
+            GuessedCharacter::Correct(c) => c == input,
+            _ => false,
+        }));
+}
+
+#[test]
+fn test_create_some_guess() {
+    let guess = Guess::guess("aabbb", "daadd");
+
+    assert_eq!(guess.guess[0], GuessedCharacter::Elsewhere('a'));
+    assert_eq!(guess.guess[1], GuessedCharacter::Correct('a'));
+    assert_eq!(guess.guess[2], GuessedCharacter::Not('b'));
+    assert_eq!(guess.guess[3], GuessedCharacter::Not('b'));
+    assert_eq!(guess.guess[4], GuessedCharacter::Not('b'));
+
+}
