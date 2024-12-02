@@ -62,6 +62,21 @@ fn test_one_orange_one_green() {
 }
 
 #[test]
+fn test_number_orange() {
+    let guess = Guess::new([
+        GuessedCharacter::Elsewhere('a'),
+        GuessedCharacter::Correct('a'),
+        GuessedCharacter::Elsewhere('c'),
+        GuessedCharacter::Not('c'),
+        GuessedCharacter::Not('b'),
+    ]);
+
+    assert_eq!(guess.orange_in_candidate(&'a', "aacca"), 2);
+    assert_eq!(guess.orange_in_candidate(&'a', "accaa"), 3);
+    assert_eq!(guess.orange_in_candidate(&'c', "accaa"), 1);
+}
+
+#[test]
 fn test_create_correct_guess() {
     let guess = Guess::guess("hello", "hello");
 

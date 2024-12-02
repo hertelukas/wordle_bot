@@ -125,20 +125,25 @@ impl Guess {
         self.guess.iter().enumerate().all(|(i, ch)| match ch {
             // Would this character be grey for `candidate`?
             GuessedCharacter::Not(ch) => {
-                let is_not_current = candidate.chars().nth(i) != Some(*ch);
+                // Would be green
+                if candidate.chars().nth(i) == Some(*ch) {
+                    return false;
+                }
 
                 let orange = self.orange_in_candidate(ch, candidate);
 
-                is_not_current && self.already_guessed(i, ch) >= orange
+                orange == 0 || self.already_guessed(i, ch) >= orange
             }
             // Would this character be orange for `candidate`?
             GuessedCharacter::Elsewhere(ch) => {
-                // Is not the current character
-                let is_not_current = candidate.chars().nth(i) != Some(*ch);
+                // Would be green
+                if candidate.chars().nth(i) == Some(*ch) {
+                    return false;
+                }
 
                 let orange = self.orange_in_candidate(ch, candidate);
 
-                is_not_current && self.already_guessed(i, ch) < orange
+                orange != 0 && self.already_guessed(i, ch) < orange
             }
             // Would this character be green for `candidate`?
             GuessedCharacter::Correct(ch) => candidate.chars().nth(i) == Some(*ch),
@@ -150,17 +155,17 @@ impl Guess {
         // Number of times this character is in the candidate
         let total_in_candidate = candidate.chars().filter(|c| c == ch).count();
 
+        if total_in_candidate == 0 {
+            return 0;
+        }
+
         // Number of times this character is green in the candidate
         let green_in_candidate = self
             .guess
             .iter()
-            .enumerate()
-            .filter(|(k, ch_check)| {
-                if let GuessedCharacter::Correct(ch_check) = ch_check {
-                    ch_check == ch && candidate.chars().nth(*k) == Some(*ch)
-                } else {
-                    false
-                }
+            .zip(candidate.chars().into_iter())
+            .filter(|(guess_ch, candidate_ch)| {
+                matches!(guess_ch, GuessedCharacter::Correct(_)) && candidate_ch == ch
             })
             .count();
 
