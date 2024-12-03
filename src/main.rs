@@ -85,7 +85,7 @@ fn read_guess() -> Guess {
 
         input = input.trim().to_string();
 
-        if input.len() != 5 {
+        if input.chars().count() != 5 {
             println!("Input has to be 5 characters long!");
             continue;
         }
@@ -98,7 +98,7 @@ fn read_guess() -> Guess {
 
         levels = levels.trim().to_string();
 
-        if levels.len() != 5 || levels.chars().any(|c| c != '0' && c != '1' && c != '2') {
+        if levels.chars().count() != 5 || levels.chars().any(|c| c != '0' && c != '1' && c != '2') {
             println!("Expected 5 numbers!");
             continue;
         }
